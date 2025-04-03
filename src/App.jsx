@@ -1,11 +1,153 @@
-import Gems from './components/gems'
-import Option from './components/option'
-import Recent from './components/recent'
+import Gems from './components/gems.jsx'
+import Option from './components/option.jsx'
+import Recent from './components/recent.jsx'
 import UserPrompt from "./components/userPrompt.jsx"
 import BotReply from "./components/botReply.jsx"
 import './index.css'
+import { useState,useEffect,useRef } from 'react'
+import ReactMarkdown from 'react-markdown';
+
 
 function App() {
+  const [recents, setrecents] = useState([
+    // {title:"Benefits of reading"},
+    // {title:"Javascript scrolling"},
+    // {title:"Data Mining"},
+    // {title:"Object detection using YOLO"},
+    // {title:"Chef assistant agent1"},
+    // {title:"Chef assistant agent2"},
+    // {title:"Chef assistant agent3"},
+    // {title:"Chef assistant agent4"},
+    // {title:"Chef assistant agent5"},
+    
+  ])
+  const [gems, setGems] = useState([
+    // {title:"Chess champ",icon:"../chess.svg",backColor:"#ffd095"},
+    // {title:"Brainstormer",icon:"../bulb.svg",backColor:"#ffcdab"},
+    // {title:"Career guide",icon:"../career.svg",backColor:"#ffc9d3"},
+    // {title:"Chess champ",icon:"../chess.svg",backColor:"#ffd095"},
+    // {title:"Chess champ",icon:"../chess.svg",backColor:"#ffd095"},
+    // {title:"Chess champ",icon:"../chess.svg",backColor:"#ffd095"},
+    
+  ])
+
+  const [currentChats, setcurrentChats] = useState([])
+
+  const [useChats, setuseChats] = useState([])
+
+  const [gotResponse, setgotResponse] = useState(false)
+  const scrollIt = useRef(null)
+
+  
+  const [moreThan5Recent, setmoreThan5Recent] = useState(false)
+  const [moreThan3Gems, setmoreThan3Gems] = useState(false)
+  const [moreClicked, setmoreClicked] = useState(false)
+  const [moreGemsClicked, setmoreGemsClicked] = useState(false)
+
+  const [chatStarted, setchatStarted] = useState(false)
+
+  const [promptState, setpromptState] = useState('')
+
+  // useEffect(()=>{
+  //   console.log(promptState)
+  // },[promptState])
+
+  const scrollToBottom = () => {
+    // Scroll to the last chat item (user or bot)
+    if (scrollIt.current) {
+      scrollIt.current.scrollTop = scrollIt.current.scrollHeight;
+    }
+  };
+  
+  useEffect(() => {
+    // Scroll to bottom whenever currentChats changes (i.e., after user or bot sends a message)
+    scrollToBottom();
+  }, [currentChats]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [useChats])
+  
+
+  const newPromptVal = (e) => {
+    setpromptState(e.target.value)
+  }
+  const sendPrompt =  async(e) =>{
+    
+    
+      if(e.key=="Enter" && e.shiftKey){
+        // console.log("Enter + Shift pressed")
+        
+        
+      }
+      else if(e.key=="Enter"){
+        // scrollIt.current.scrollTop = 5000
+        // scrollIt.current.scrollTo({
+          //   top: 1000,
+        //   behavior: 'smooth'
+        // })
+        
+        // setpromptState(false)
+        setgotResponse(true)
+        e.preventDefault()
+        // console.log("Enter key pressed")
+          setchatStarted(true)
+          
+          let textPrompt = promptState
+          setpromptState("")
+          setuseChats([textPrompt])
+          // console.log("sending prompt to bot")
+          let BotReply = await fetch(`http://localhost:3000/${textPrompt}`,{
+            method: "POST",
+            headers: { "Content-Type": "application/json" }
+        })
+          BotReply = await BotReply.json()
+          // console.log()
+          let data = {user:textPrompt,bot:BotReply.text}
+          setuseChats([])
+          setgotResponse(false)
+          setcurrentChats((prevChats)=>[...prevChats,data])
+          // scrollIt.current.scrollTop = 5000;
+          
+        setpromptState('')
+        }
+      // setgotResponse(false)
+  }
+
+  useEffect(() => {
+    let val = recents.length;
+    if(val>=5){
+      setmoreThan5Recent(true);
+    }
+  
+  },[recents])
+
+  useEffect(()=>{
+    if(recents.length >=1 || gems.length>=1){
+      gems_recents_hide.current.style.visibility="visible";
+    }
+  },[recents,gems])
+
+  const gems_recents_hide = useRef(null)
+
+  useEffect(() => {
+    let val = gems.length;
+    if(val>=3){
+      setmoreThan3Gems(true);
+    }
+  
+  },[gems])
+
+  const changeMore = ()=>{
+    setmoreClicked(!moreClicked);
+  }
+ 
+  const changeMoreGem = ()=>{
+
+    setmoreGemsClicked(!moreGemsClicked);
+  }
+ 
+  
 
   return (
     <>
@@ -28,51 +170,92 @@ function App() {
             </button>
           </div>
           
-          <div className="recent-gems flex flex-col gap-[18px] h-[51vh] overflow-x-hidden overflow-y-auto 
+          {(gems || recents) && <div ref={gems_recents_hide} className="recent-gems invisible flex flex-col gap-[18px] h-[51vh] overflow-x-hidden overflow-y-auto 
             scrollbar-hide hover:scrollbar-default">
             {/* recent section  */}
             <div className="recent flex flex-col gap-[5px]">
-              <h3 className='font-[500] text-[14px]'>Recent</h3>
+              {recents.length>=1 && <h3 className='font-[500] text-[14px]'>Recent</h3>}
               {/* my recents  */}
 
               {/* recent 01  */}
-              <Recent title={"Benefits of reading"}/>
-              <Recent title={"Javascript scrolling"}/>
-              <Recent title={"Data Mining"}/>
-              <Recent title={"Object detection using YOLO"}/>
-              <Recent title={"Chef assistant agent"}/>
+              {recents  && !moreClicked &&
+                    recents.map((recentItem,index)=>(
+                    index<5?<Recent title={recentItem.title}/>:""
+                    
+              ))}
+              
+              {recents  && moreClicked &&
+                    recents.map((recentItem,index)=>(
+                    <Recent title={recentItem.title}/>
+                    
+              ))}
+
               {/* recent 01 end */}
 
               {/* recent more option  */}
-              <div className='flex cursor-pointer hover:bg-[#cecece3d]  items-center p-[7px_6px] rounded-[40px] gap-[10px]'>
+              {moreThan5Recent && !moreClicked && <div className='flex  hover:bg-[#cecece3d]  items-center p-[7px_6px] rounded-[40px] gap-[10px]'>
                 <div className="p-[4px] rounded-[50px] border border-[#00000000]">
 
                 <img src="../public/down.png" alt="more-options-icon" className="w-[15px]" />
                 </div>
 
 
-                <h4 className='text-[13px] text-[#575b5f]'>More</h4>
-              </div>
+                <h4 className='text-[13px] text-[#575b5f]'><button onClick={changeMore} className='cursor-pointer'>More</button></h4>
+              </div>}
+
+              {moreThan5Recent && moreClicked && <div className='flex cursor-pointer hover:bg-[#cecece3d]  items-center p-[7px_6px] rounded-[40px] gap-[10px]'>
+                <div className="p-[4px] rounded-[50px] border border-[#00000000]">
+
+                <img src="../public/up-arrow.png" alt="more-options-icon" className="w-[9px]" />
+                </div>
+
+
+                <h4 className='text-[13px] text-[#575b5f]'><button onClick={changeMore} className='cursor-pointer'>Less</button></h4>
+              </div>}
 
             </div>
             {/* gems section  */}
             <div className="gems flex flex-col gap-[5px]">
-                <h3 className='font-[500] text-[14px]'>Gems</h3>
+                {gems.length>=1 && <h3 className='font-[500] text-[14px]'>Gems</h3>}
                 
                 {/* gem 01 */}
-                <Gems title={"Chess champ"} icon={"../chess.svg"} backColor={"#ffd095"}/>
-                <Gems title={"Brainstormer"} icon={"../bulb.svg"} backColor={"#ffcdab"}/>
-                <Gems title={"Career guide"} icon={"../career.svg"} backColor={"#ffc9d3"}/>
+                {gems  && !moreGemsClicked &&
+                    gems.map((gemItem,index)=>(
+                    index<3?<Gems title={gemItem.title} backColor={gemItem.backColor} icon={gemItem.icon}/>:""
+                    
+              ))}
+              
+              {gems  && moreGemsClicked &&
+                    gems.map((gemItem,index)=>(
+                    <Gems title={gemItem.title} backColor={gemItem.backColor} icon={gemItem.icon}/>
+                    
+              ))}
 
                 {/* more gems option  */}
-                <div className='flex cursor-pointer hover:bg-[#cecece3d]  items-center p-[7px_6px] rounded-[40px] gap-[1vw]'>
-                  <div className="p-[1px] pl-[5px] rounded-[50px] border border-[#00000000]">
-                      <img src="../public/down.png" alt="more-options-icon" className="w-[15px]" />
-                  </div>
-                <h4 className='text-[13px] text-[#575b5f]'>More</h4>
-              </div>
+                {moreThan3Gems && !moreGemsClicked && <div className='flex  hover:bg-[#cecece3d]  items-center p-[7px_6px] rounded-[40px] gap-[10px]'>
+                <div className="p-[4px] rounded-[50px] border border-[#00000000]">
+
+                <img src="../public/down.png" alt="more-options-icon" className="w-[15px]" />
+                </div>
+
+
+                <h4 className='text-[13px] text-[#575b5f]'><button onClick={changeMoreGem} className='cursor-pointer'>More</button></h4>
+              </div>}
+
+              {moreThan3Gems && moreGemsClicked && <div className='flex cursor-pointer hover:bg-[#cecece3d]  items-center p-[7px_6px] rounded-[40px] gap-[10px]'>
+                <div className="p-[4px] rounded-[50px] border border-[#00000000]">
+
+                <img src="../public/up-arrow.png" alt="more-options-icon" className="w-[9px]" />
+                </div>
+
+
+                <h4 className='text-[13px] text-[#575b5f]'><button onClick={changeMoreGem} className='cursor-pointer'>Less</button></h4>
+              </div>}
+
+
             </div>
           </div>
+          }
           
           <div className="footer flex flex-col mt-[13px] mb-[20px] p-[5px_0px]">
             {/* add gem manager, help, settings,activity here  */}
@@ -134,7 +317,7 @@ function App() {
             </div>
             <div className='flex items-center gap-[20px]'>
               <div>
-                  <button className='z-99999 cursor-pointer flex items-center text-[13px] font-[500] rounded-[6px] p-[8px] pl-6 pr-5 gap-2 bg-[#dde3ea]'><img src="../gemini-color.svg" alt="gemini-icon"/> Try Gemini Advanced</button>
+                  <button className='z-99999 cursor-pointer flex items-center text-[12px] font-[500] rounded-[6px] p-[8px] pl-6 pr-5 gap-2 bg-[#dde3ea]'><img src="../gemini-color.svg" alt="gemini-icon"/> Try Gemini Advanced</button>
               </div>
               <div>
                 <button><img src="./folder.png" alt="folder-icon" className='z-99999 cursor-pointer w-[20px] flex items-center' /></button>
@@ -153,33 +336,77 @@ function App() {
             
           {/* main chat area  */}
           <div className='w-[100%] h-[90vh] flex flex-col items-center'>
-              <div className="chatArea  w-[65%] h-[80%]  relative overflow-y-auto overflow-x-hidden scrollbar-hide">
+              <div ref={scrollIt} className="chatArea  w-[65%] h-[80%]  relative overflow-y-auto overflow-x-hidden scrollbar-hide">
 
                 {/* user message */}
-                <UserPrompt prompt={"Hi I am the message"}/>
+                {/* <UserPrompt prompt={"Hi I am the message"}/> */}
 
                 {/* bot reply  */}
-                <BotReply reply={'Hello \"the message\"! It\'s nice to meet you. Is there anything I can help you with today?'}/>
-                {/* user message */}
-                <UserPrompt prompt={"Hi I am the message"}/>
-
-                {/* bot reply  */}
-                <BotReply reply={'Hello \"the message\"! It\'s nice to meet you. Is there anything I can help you with today?'}/>
-                {/* user message */}
-                <UserPrompt prompt={"Hi I am the message"}/>
-
-                {/* bot reply  */}
-                <BotReply reply={'Hello \"the message\"! It\'s nice to meet you. Is there anything I can help you with today?'}/>
+                {/* <BotReply reply={'Hello \"the message\"! It\'s nice to meet you. Is there anything I can help you with today?'}/> */}
                 
+
+                {
+                 currentChats && 
+                 currentChats.map((current)=>(
+                    <>
+                     {/* {
+                        scrollIt.current.scrollTo({
+                          top: 1000,
+                          behavior: 'smooth'
+                        })
+                      } */}
+                      <UserPrompt prompt={current.user}/>
+                      
+                      <BotReply reply={current.bot}/>
+                     
+                    </>
+                  ))
+                }
+
+                {
+                  useChats && 
+                  useChats.map((userText)=>(
+                    <UserPrompt prompt={userText}/>
+
+                  ))
+
+                }
+                {gotResponse && 
+                  <>
+                    <div className='flex items-start gap-[20px] mt-[80px] mb-[30px]'>
+                                  <div className='flex-shrink-0'> 
+                                    <img src="../gemini-color.svg" className='w-[25px]' alt="" />
+                                  </div>
+                                  <div className='flex flex-col gap-[15px]'>
+                                    <div>
+                                      <h3 className='text-[#575b5f] text-[15px] animate-fade-in'>
+                                      Generating Response....
+                                    </h3>
+                                    </div>
+                                  </div>
+                                </div>
+                    </>
+                
+                }
+
+
+
+
+
+                {!chatStarted && <div className=' w-[100%] h-[88%] flex items-center justify-center'>
+                  <h3 className='text-[1.95rem] font-[500] bg-gradient-to-r from-blue-500 to-red-500 bg-clip-text text-transparent'>Hello, Muhammad Zain</h3>
+                </div>}
                
               </div>
 
-              <div className="prompt-box z-99999 bg-[white] border w-[70%] h-[16%] border-[grey]  bottom-0 left-25 rounded-[26px] p-[10px_24px] flex flex-col gap-[30px]">
-                <input type="text" className='w-[100%] border-none outline-none' placeholder='Ask Gemini'/>
+              <div className="prompt-box z-99999 bg-[white] border w-[64%] h-[16%] border-[#d3d3d3]  bottom-0 left-25 rounded-[26px] p-[10px_24px] flex flex-col gap-[8px]">
+                {/* <input type="text"/> */}
+                <textarea onChange={newPromptVal} onKeyDown={sendPrompt} className='w-[100%] h-auto outline-none resize-none' placeholder='Ask Gemini' value={promptState}></textarea>
+
                 <div className='flex justify-between'>
                   <div className='flex gap-[16px]'>
                       <button><img src="./plus.png" className='w-[12px]' alt="" /></button>
-                      <button className='flex gap-[5px] text-[15px] items-center'><img src="./writing.png" className='w-[12px] object-contain' alt="" />Canvas</button>
+                      <button className='flex gap-[5px] text-[15px] items-center`'><img src="./writing.png" className='w-[12px] object-contain' alt="" />Canvas</button>
                   </div>
                   <div>
                     <button><img src="./microphone-black-shape.png" className='w-[15px]' alt="" /></button>
