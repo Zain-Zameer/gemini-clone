@@ -10,7 +10,7 @@ import ReactMarkdown from 'react-markdown';
 
 function App() {
   const [recents, setrecents] = useState([
-    // {title:"Benefits of reading"},
+    // {title:"Understanding Large Language Model"},
     // {title:"Javascript scrolling"},
     // {title:"Data Mining"},
     // {title:"Object detection using YOLO"},
@@ -22,12 +22,12 @@ function App() {
     
   ])
   const [gems, setGems] = useState([
-    // {title:"Chess champ",icon:"../chess.svg",backColor:"#ffd095"},
-    // {title:"Brainstormer",icon:"../bulb.svg",backColor:"#ffcdab"},
-    // {title:"Career guide",icon:"../career.svg",backColor:"#ffc9d3"},
-    // {title:"Chess champ",icon:"../chess.svg",backColor:"#ffd095"},
-    // {title:"Chess champ",icon:"../chess.svg",backColor:"#ffd095"},
-    // {title:"Chess champ",icon:"../chess.svg",backColor:"#ffd095"},
+    {title:"Chess champ",icon:"../chess.svg",backColor:"#ffd095"},
+    {title:"Brainstormer",icon:"../bulb.svg",backColor:"#ffcdab"},
+    {title:"Career guide",icon:"../career.svg",backColor:"#ffc9d3"},
+    {title:"Chess champ",icon:"../chess.svg",backColor:"#ffd095"},
+    {title:"Chess champ",icon:"../chess.svg",backColor:"#ffd095"},
+    {title:"Chess champ",icon:"../chess.svg",backColor:"#ffd095"},
     
   ])
 
@@ -47,6 +47,7 @@ function App() {
   const [chatStarted, setchatStarted] = useState(false)
 
   const [promptState, setpromptState] = useState('')
+  const newChatRef = useRef(null)
 
   // useEffect(()=>{
   //   console.log(promptState)
@@ -68,7 +69,23 @@ function App() {
     scrollToBottom();
   }, [useChats])
   
-
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        let response = await fetch("http://localhost:3000/receive/collections");
+        response = await response.json()
+        const formattedData = response.map(text => ({ title: text }));
+        setrecents(formattedData);
+        console.log(response)
+      } catch (error) {
+        console.error("Error fetching collections:", error);
+      }
+    };
+  
+    fetchCollections();
+  
+  }, []); 
+  
   const newPromptVal = (e) => {
     setpromptState(e.target.value)
   }
@@ -107,7 +124,10 @@ function App() {
           setuseChats([])
           setgotResponse(false)
           setcurrentChats((prevChats)=>[...prevChats,data])
+          newChatRef.current.style.color = "black"
+          newChatRef.current.style.backgroundColor = "#b9b9b975"
           // scrollIt.current.scrollTop = 5000;
+          setdisableNewChat(false)
           
         setpromptState('')
         }
@@ -142,10 +162,44 @@ function App() {
     setmoreClicked(!moreClicked);
   }
  
+  // current working area 
+  const newChatClicked = async() => {
+    // console.log()
+    let summarizeRecentTitle = await fetch(`http://localhost:3000/getSubject/${currentChats[0].bot}`,{
+            method: "POST",
+            headers: { "Content-Type": "application/json" }}) 
+    summarizeRecentTitle = await summarizeRecentTitle.json()
+    let subjectLine = summarizeRecentTitle.subject
+    // console.log(summarizeRecentTitle)
+    let myChats = currentChats
+    let recentSave = {title:subjectLine}
+
+    setrecents((prevRecents)=>[...prevRecents,recentSave])
+
+    setcurrentChats([])
+    setchatStarted(false)
+    newChatRef.current.style.color = "grey"
+    let respone = await fetch(`http://localhost:3000/savechat/save`,{
+      method: "POST",
+      headers: { "Content-Type": "application/json" },body: JSON.stringify({
+        chatArray: myChats,
+        colName: subjectLine
+    })})
+
+
+  }
+  const recentClicked=async(e)=>{
+    console.log(e.target.textContent)
+    let recentTitle = e.target.textContent;
+    let responseChats = await fetch(`http://localhost:3000/getCol/${recentTitle}`)
+    responseChats = await responseChats.json()
+    console.log(responseChats)
+  }
   const changeMoreGem = ()=>{
 
     setmoreGemsClicked(!moreGemsClicked);
   }
+  const [disableNewChat, setdisableNewChat] = useState(true)
  
   
 
@@ -164,7 +218,7 @@ function App() {
           
           <div className="new-chat-box mt-[50px] mb-[40px] ">
             {/* add new chat button  */}
-            <button className='bg-[#d0d0d04f] z-99999 p-[10px_16px] w-fit rounded-[40px] flex items-center bg-none gap-[21px] text-[13px] text-[#4447464a] font-[600]'>
+            <button ref={newChatRef} disabled={disableNewChat} onClick={newChatClicked} className='bg-[#d0d0d04f] cursor-pointer z-99999 p-[10px_16px] w-fit rounded-[40px] flex items-center bg-none gap-[21px] text-[13px] text-[#4447464a] font-[500]'>
               <img src="../public/plus.png" alt="new-chat-icon" className="w-[13px] object-contain" />
               <span>New chat</span>
             </button>
@@ -180,13 +234,13 @@ function App() {
               {/* recent 01  */}
               {recents  && !moreClicked &&
                     recents.map((recentItem,index)=>(
-                    index<5?<Recent title={recentItem.title}/>:""
+                    index<5?<Recent title={recentItem.title} recentClicked={recentClicked}/>:""
                     
               ))}
               
               {recents  && moreClicked &&
                     recents.map((recentItem,index)=>(
-                    <Recent title={recentItem.title}/>
+                    <Recent title={recentItem.title} recentClicked={recentClicked}/>
                     
               ))}
 
