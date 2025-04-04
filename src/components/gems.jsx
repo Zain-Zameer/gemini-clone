@@ -13,7 +13,7 @@ const gems = (props) => {
                     </div>
                   </div>
                   <div className='flex items-center'>
-                    <img src="../public/more.png" alt="more-gem-icon" className='w-[15px]'/>
+                    <img src="/more.png" alt="more-gem-icon" className='w-[15px]'/>
                   </div>
                 </div>
     </>

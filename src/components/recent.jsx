@@ -7,7 +7,7 @@ const recent = (props) => {
                 <div className='flex items-center  justify-between'>
                     <div className='p-[4px] rounded-[50px] border border-[#00000000]'>
 
-                  <img src="../public/menu.png" alt="menu-icon-recents" className="w-[20px] "/>
+                  <img src="/menu.png" alt="menu-icon-recents" className="w-[20px] "/>
                     </div>
                     <div>
 
@@ -15,7 +15,7 @@ const recent = (props) => {
                     </div>
                 </div>
                 <div className='flex items-center'>
-                  <img src="../public/more.png" alt="more-recent-icon" className="w-[15px]" />
+                  <img src="/more.png" alt="more-recent-icon" className="w-[15px]" />
                 </div>
               </div>
     </>

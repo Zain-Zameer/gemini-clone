@@ -32,7 +32,7 @@ app.post("/:prompt",async (req,res)=>{
 app.post("/getSubject/:promptSubject",async(req,res)=>{
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
     const prompt = req.params.promptSubject;
-    const subjectPrompt = `Extract a short subject line (4-5 words) based on the user's prompt:\n\n"${prompt}"`;
+    const subjectPrompt = `Extract a short subject line (4-5 words) based on the user's prompt, and avoid using any special characters (e.g., ?, !, /, etc.):\n\n"${prompt}"`;
     const subjectResult = await model.generateContent(subjectPrompt);
     const subjectLine = subjectResult.response.text();
 
@@ -52,7 +52,7 @@ app.post("/savechat/save",(req,res)=>{
     })
     
     // console.log(recentJson)
-    res.json("i ran")
+    res.json("i ran");
 
 })
 

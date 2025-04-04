@@ -32,13 +32,12 @@ function App() {
   ])
 
   const [currentChats, setcurrentChats] = useState([])
-
+  const [getRecents, setgetRecents] = useState(false)
   const [useChats, setuseChats] = useState([])
 
   const [gotResponse, setgotResponse] = useState(false)
   const scrollIt = useRef(null)
-
-  
+   
   const [moreThan5Recent, setmoreThan5Recent] = useState(false)
   const [moreThan3Gems, setmoreThan3Gems] = useState(false)
   const [moreClicked, setmoreClicked] = useState(false)
@@ -84,7 +83,25 @@ function App() {
   
     fetchCollections();
   
-  }, []); 
+  },[]); 
+
+  useEffect(() => {
+    const fetchCollections = async () => {
+      try {
+        let response = await fetch("http://localhost:3000/receive/collections");
+        response = await response.json()
+        const formattedData = response.map(text => ({ title: text }));
+        setrecents(formattedData);
+        console.log(response)
+      } catch (error) {
+        console.error("Error fetching collections:", error);
+      }
+    };
+  
+    fetchCollections();
+  }, [getRecents])
+  
+ 
   
   const newPromptVal = (e) => {
     setpromptState(e.target.value)
@@ -134,12 +151,19 @@ function App() {
       // setgotResponse(false)
   }
 
+
+
   useEffect(() => {
     let val = recents.length;
     if(val>=5){
       setmoreThan5Recent(true);
     }
   
+  },[recents])
+
+  useEffect(()=>{
+    console.log(recents)
+
   },[recents])
 
   useEffect(()=>{
@@ -161,9 +185,11 @@ function App() {
   const changeMore = ()=>{
     setmoreClicked(!moreClicked);
   }
- 
+  let recentTitleCol = useRef(null)
   // current working area 
   const newChatClicked = async() => {
+    setgetRecents(true)
+    
     // console.log()
     let summarizeRecentTitle = await fetch(`http://localhost:3000/getSubject/${currentChats[0].bot}`,{
             method: "POST",
@@ -172,9 +198,48 @@ function App() {
     let subjectLine = summarizeRecentTitle.subject
     // console.log(summarizeRecentTitle)
     let myChats = currentChats
+    if(recentTitleCol.current){
+      let responseChats = await fetch(`http://localhost:3000/getCol/${recentTitleCol.current}`)
+      responseChats = await responseChats.json()
+      let mergeChatsDBUser = [...myChats,...responseChats]
+      // Create a frequency map based on `user + bot` string
+      const freqMap = new Map();
+      for (const item of mergeChatsDBUser) {
+        const key = `${item.user}|${item.bot}`;
+        freqMap.set(key, (freqMap.get(key) || 0) + 1);
+      }
+
+      // Filter out items that appear only once based on that key
+      myChats = mergeChatsDBUser.filter(item => {
+        const key = `${item.user}|${item.bot}`;
+        return freqMap.get(key) === 1;
+      });
+
+      
+
+    }
     let recentSave = {title:subjectLine}
+    
+    // combine responseChats and myChats
+    
+    // console.log(uniqueOnly)
 
     setrecents((prevRecents)=>[...prevRecents,recentSave])
+    let titles = new Set()
+    recents.map((item)=>{
+      titles.add(item.title)
+    })
+    let data = []
+    titles.forEach((item)=>{
+      data.push({title:item})
+    })
+
+    setrecents(data)
+    // console.log(recents)
+    
+    // console.log(recents)
+
+    // uncomment this soon below
 
     setcurrentChats([])
     setchatStarted(false)
@@ -185,15 +250,33 @@ function App() {
         chatArray: myChats,
         colName: subjectLine
     })})
+    
+    setgetRecents(false)
 
-
+    recentTitleCol.current = null
   }
   const recentClicked=async(e)=>{
     console.log(e.target.textContent)
     let recentTitle = e.target.textContent;
+    recentTitleCol.current = recentTitle
     let responseChats = await fetch(`http://localhost:3000/getCol/${recentTitle}`)
     responseChats = await responseChats.json()
+
     console.log(responseChats)
+    setchatStarted(true)
+    setcurrentChats([])
+    newChatRef.current.style.color = "black"
+    newChatRef.current.style.backgroundColor = "#b9b9b975"
+    // scrollIt.current.scrollTop = 5000;
+    setdisableNewChat(false)
+    
+    // getting unique responseChats
+ 
+
+    responseChats.map((item)=>{
+      let newItem = {user:item.user,bot:item.bot};
+      setcurrentChats((prevChats)=>[...prevChats,newItem])
+    })
   }
   const changeMoreGem = ()=>{
 
@@ -212,14 +295,14 @@ function App() {
         <div className="more-options ">
             {/* add more options icon  */}
             <button className='cursor-pointer hover:bg-[#cecece3d] rounded-[50px] w-fit p-[10px]'>
-              <img src="../public/menu.png" alt="menu-icon" className='w-[25px]' />
+              <img src="/menu.png" alt="menu-icon" className='w-[25px]' />
             </button>
           </div>
           
           <div className="new-chat-box mt-[50px] mb-[40px] ">
             {/* add new chat button  */}
             <button ref={newChatRef} disabled={disableNewChat} onClick={newChatClicked} className='bg-[#d0d0d04f] cursor-pointer z-99999 p-[10px_16px] w-fit rounded-[40px] flex items-center bg-none gap-[21px] text-[13px] text-[#4447464a] font-[500]'>
-              <img src="../public/plus.png" alt="new-chat-icon" className="w-[13px] object-contain" />
+              <img src="/plus.png" alt="new-chat-icon" className="w-[13px] object-contain" />
               <span>New chat</span>
             </button>
           </div>
@@ -250,7 +333,7 @@ function App() {
               {moreThan5Recent && !moreClicked && <div className='flex  hover:bg-[#cecece3d]  items-center p-[7px_6px] rounded-[40px] gap-[10px]'>
                 <div className="p-[4px] rounded-[50px] border border-[#00000000]">
 
-                <img src="../public/down.png" alt="more-options-icon" className="w-[15px]" />
+                <img src="/down.png" alt="more-options-icon" className="w-[15px]" />
                 </div>
 
 
@@ -289,7 +372,7 @@ function App() {
                 {moreThan3Gems && !moreGemsClicked && <div className='flex  hover:bg-[#cecece3d]  items-center p-[7px_6px] rounded-[40px] gap-[10px]'>
                 <div className="p-[4px] rounded-[50px] border border-[#00000000]">
 
-                <img src="../public/down.png" alt="more-options-icon" className="w-[15px]" />
+                <img src="/down.png" alt="more-options-icon" className="w-[15px]" />
                 </div>
 
 
@@ -443,12 +526,8 @@ function App() {
                 
                 }
 
-
-
-
-
                 {!chatStarted && <div className=' w-[100%] h-[88%] flex items-center justify-center'>
-                  <h3 className='text-[1.95rem] font-[500] bg-gradient-to-r from-blue-500 to-red-500 bg-clip-text text-transparent'>Hello, Muhammad Zain</h3>
+                  <h3 className='text-[1.95rem] select-none font-[500] bg-gradient-to-r from-blue-500 to-red-500 bg-clip-text text-transparent'>Hello, Muhammad Zain</h3>
                 </div>}
                
               </div>
