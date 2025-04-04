@@ -6,6 +6,7 @@ import BotReply from "./components/botReply.jsx"
 import './index.css'
 import { useState,useEffect,useRef } from 'react'
 import ReactMarkdown from 'react-markdown';
+import fs from "fs"
 
 
 function App() {
@@ -131,7 +132,7 @@ function App() {
           setpromptState("")
           setuseChats([textPrompt])
           // console.log("sending prompt to bot")
-          let BotReply = await fetch(`http://localhost:3000/${textPrompt}`,{
+          let BotReply = await fetch(`http://localhost:3000/${textPrompt}/${hasFile}`,{
             method: "POST",
             headers: { "Content-Type": "application/json" }
         })
@@ -185,6 +186,44 @@ function App() {
   const changeMore = ()=>{
     setmoreClicked(!moreClicked);
   }
+  const takeFile = useRef(null)
+const [hasFile, sethasFile] = useState(false)
+  const fileName = useRef(null)
+
+  const removeAttachedFile = async(e)=>{
+    e.preventDefault()
+    sethasFile(false)
+    fileName.current = null 
+    let response = await fetch("http://localhost:3000/uploads/files/empty")
+  }
+  
+  const fileRecieved = async()=>{
+    // e.preventDefault()
+    let file =takeFile.current.files[0]
+    fileName.current = file.name 
+    sethasFile(true)
+    // console.log(file.name)
+    const formData = new FormData()
+    formData.append('userFile',file)
+    // console.log(f)
+    let response = await fetch("http://localhost:3000/upload/send/file",{
+      method: 'POST',
+      body: formData
+    })  
+  
+
+}
+
+  const attachFile = ()=>{
+    takeFile.current.click()
+    // const response = await fetch(`http://localhost:3000/upload/file/`,{
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },body: JSON.stringify({
+    //     userFile: file
+    // })})
+  }
+  
+
   let recentTitleCol = useRef(null)
   // current working area 
   const newChatClicked = async() => {
@@ -255,6 +294,7 @@ function App() {
 
     recentTitleCol.current = null
   }
+  
   const recentClicked=async(e)=>{
     console.log(e.target.textContent)
     let recentTitle = e.target.textContent;
@@ -529,16 +569,41 @@ function App() {
                 {!chatStarted && <div className=' w-[100%] h-[88%] flex items-center justify-center'>
                   <h3 className='text-[1.95rem] select-none font-[500] bg-gradient-to-r from-blue-500 to-red-500 bg-clip-text text-transparent'>Hello, Muhammad Zain</h3>
                 </div>}
+
+                
+              {/* show selected file */}
+              <div>
+
+              {hasFile && <div className='absolute bottom-2 left-10 cursor-pointer border border-[grey] flex gap-[13px] bg-[aliceblue] w-fit rounded-[12px] px-[15px] py-[0px]'>
+                <h3 className='text-[12px] w-[71px] truncate overflow-hidden whitespace-nowrap'>{fileName.current}</h3>
+                <button onClick={removeAttachedFile} className='cursor-pointer hover:bg-[#cecece3d]  z-99999 rounded-[50px] p-[3px]'>
+                  <img src="./plus.png" alt="" className='w-[12px] object-contain'/>
+                </button>
+              </div>}
+
+              </div>
+              {/* show selected file  end*/}
                
               </div>
 
+
               <div className="prompt-box z-99999 bg-[white] border w-[64%] h-[16%] border-[#d3d3d3]  bottom-0 left-25 rounded-[26px] p-[10px_24px] flex flex-col gap-[8px]">
+
+                
+
+                
                 {/* <input type="text"/> */}
                 <textarea onChange={newPromptVal} onKeyDown={sendPrompt} className='w-[100%] h-auto outline-none resize-none' placeholder='Ask Gemini' value={promptState}></textarea>
 
                 <div className='flex justify-between'>
                   <div className='flex gap-[16px]'>
-                      <button><img src="./plus.png" className='w-[12px]' alt="" /></button>
+
+                      {/* file uploading area  */}
+                      <input ref={takeFile} onChange={fileRecieved} type="file" name="" className='hidden' accept={".txt"}/>
+
+                      <button onClick={attachFile} className='cursor-pointer hover:bg-[#cecece3d]  z-99999 rounded-[50px] p-[5px]'><img src="./plus.png" className='w-[12px]' alt="" /></button>
+
+
                       <button className='flex gap-[5px] text-[15px] items-center`'><img src="./writing.png" className='w-[12px] object-contain' alt="" />Canvas</button>
                   </div>
                   <div>

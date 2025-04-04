@@ -1,20 +1,5 @@
+import fs from "fs"
 
-let responseChats = [
-   {title:"Hello"},
-   {title:"Hey"},
-   {title:"Hello"},
-   {title:"Kai cenat"},
-   {title:"Hey"},
-   {title:"duke dennis"},
-   {title:"fanum tax"},
-   {title:"duke dennis"},
-   
-]
-
-let titles = new Set()
-responseChats.map((item)=>{
-  titles.add(item.title)
-})
-titles.forEach((data)=>{
+fs.readFile("./isi.txt","utf8",(err,data)=>{
   console.log(data)
 })
