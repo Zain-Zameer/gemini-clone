@@ -190,14 +190,14 @@ function App() {
 const [hasFile, sethasFile] = useState(false)
   const fileName = useRef(null)
 
-  const removeAttachedFile = async(e)=>{
-    e.preventDefault()
+  const removeAttachedFile = async()=>{
+    // e.preventDefault()
     sethasFile(false)
     fileName.current = null 
     let response = await fetch("http://localhost:3000/uploads/files/empty")
   }
   
-  const fileRecieved = async()=>{
+  const fileRecieved = async(e)=>{
     // e.preventDefault()
     let file =takeFile.current.files[0]
     fileName.current = file.name 

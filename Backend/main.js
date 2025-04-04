@@ -30,7 +30,10 @@ app.post("/:prompt/:hasFile",async (req,res)=>{
     if(req.params.hasFile){
         fs.readdir("./uploads",(err,files)=>{
             if(files.length>0){
-                let data = files[0]
+                let file = files[0]
+                fs.readFile(path.join("./uploads",file),(err,data)=>{
+                    console.log(data.toString())
+                })
             }else{
                 console.log("no files found.")
             }
@@ -71,34 +74,32 @@ app.post("/savechat/save",(req,res)=>{
 
 })
 
-app.use("/upload/send/file", async (req, res, next) => {
-    
-      const files = await fs.promises.readdir("./uploads");
-      for (const file of files) {
-        await fs.promises.unlink(path.join("./uploads", file));
-      }
-      next();
-     
-  });
+app.use("/upload/send/file", (req, res, next) => {    
+    let files = fs.readdirSync("./uploads")
+    for(const file of files){
+        fs.unlink(path.join("./uploads",file),()=>{
+            
+        })
+    }
+    console.log("hello, world")
+    // res.send(200)
+    next();
+});
 
-  
 app.post("/upload/send/file",upload.single('userFile'),(req,res)=>{
     console.log("Uploaded a file")
-    const file = req.file;
-    fs.readFile(file.path,'utf8',(err,data)=>{
-        // console.log(data)
-    })
-    res.send("Ok")
+    const file = req.file;    
+    res.send("worked.")
 })
 
 app.get("/uploads/files/empty",(req,res)=>{
-    fs.readdir("./uploads",(err,files)=>{
-        for(const file of files){
-            fs.unlink(path.join("./uploads",file),()=>{
-               //
-            })
-        }
-    })
+    let files = fs.readdirSync("./uploads")
+    for(const file of files){
+        fs.unlink(path.join("./uploads",file),()=>{
+            // console.log()
+        })
+    }
+    res.send(200)
 })
 
 app.get("/getCol/:colname",async (req,res)=>{
