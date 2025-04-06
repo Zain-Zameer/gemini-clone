@@ -102,7 +102,7 @@ function App() {
     fetchCollections();
   }, [getRecents])
   
- 
+ const [fOPrompt, setfOPrompt] = useState(false)
   
   const newPromptVal = (e) => {
     setpromptState(e.target.value)
@@ -121,8 +121,10 @@ function App() {
           //   top: 1000,
         //   behavior: 'smooth'
         // })
+        sethasFile(false)
         
         // setpromptState(false)
+        setfOPrompt(true)
         setgotResponse(true)
         e.preventDefault()
         // console.log("Enter key pressed")
@@ -132,10 +134,10 @@ function App() {
           setpromptState("")
           setuseChats([textPrompt])
           // console.log("sending prompt to bot")
-          let BotReply = await fetch(`http://localhost:3000/${textPrompt}/${hasFile}`,{
+          let BotReply = await fetch(`http://localhost:3000/${textPrompt}/${fOPrompt}`,{
             method: "POST",
             headers: { "Content-Type": "application/json" }
-        })
+          })
           BotReply = await BotReply.json()
           // console.log()
           let data = {user:textPrompt,bot:BotReply.text}
@@ -541,11 +543,15 @@ const [hasFile, sethasFile] = useState(false)
                 }
 
                 {
-                  useChats && 
-                  useChats.map((userText)=>(
-                    <UserPrompt prompt={userText}/>
-
-                  ))
+                  useChats && fOPrompt?useChats.map((userText)=>(
+                    
+                    <div className='flex justify-end'>
+                    <div className='border border-[grey] flex gap-[13px] bg-[aliceblue] w-fit rounded-[12px] px-[15px] py-[0px]'>
+                        <h3 className='text-[17px] w-[71px] truncate overflow-hidden whitespace-nowrap'>{fileName.current}</h3>
+                            <UserPrompt prompt={userText}/>
+                    </div>
+                    </div>
+                  )):useChats.map((userText)=>(<UserPrompt prompt={userText}/>))
 
                 }
                 {gotResponse && 
